@@ -1,0 +1,165 @@
+sf: 4
+model:
+  learning_rate: 0.0001
+  base_learning_rate: 0.0001
+  target: ldm.models.diffusion.ddpm_st_v3_finetune_style_weight.LatentDiffusiontransferV2
+  params:
+    # parameterization: "v"
+    linear_start: 0.00085
+    linear_end: 0.0120
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: image
+    cond_stage_key: caption
+    image_size: 256
+    channels: 4
+    cond_stage_trainable: False   # Note: different from the one we trained before
+    conditioning_key: crossattn
+    # vgg_encoder
+    vgg_encoder_ckpt_path: ./checkpoints/vgg_normalised.pth
+    #monitor: val/loss_simple_ema
+    scale_factor: 0.18215
+    use_ema: False
+    # resume_ckpt_path:  #used for test
+    # for training only
+    ckpt_path: ./checkpoints/v2-1_512-ema-pruned.ckpt
+    unfrozen_diff: False
+    random_size: False
+    time_replace: 1000
+    # sampler ddim plms dpm-solver
+    sampler: ddim
+    total_ddim_steps: 20
+    use_usm: True
+    content_threshold: 0.9
+    style_weight: 0.6
+    #P2 weighting, we do not use in final version
+    p2_gamma: ~
+    p2_k: ~
+    
+    # ignore_keys: []
+
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel.UNetModelDualtransferV4_1
+      params:
+        image_size: 32 # unused
+        in_channels: 4
+        out_channels: 4
+        model_channels: 320
+        attention_resolutions: [ 4, 2, 1 ]
+        num_res_blocks: 2
+        channel_mult: [ 1, 2, 4, 4 ]
+        num_head_channels: 64
+        use_spatial_transformer: True
+        use_linear_in_transformer: True
+        transformer_depth: 1
+        context_dim: 1024
+        use_checkpoint: False
+        legacy: False
+        semb_channels: 256
+        style_dim: 2944
+        style_extra_context_tokens: 4
+
+    first_stage_config:
+      target: ldm.models.autoencoder.AutoencoderKL
+      params:
+        # for training only
+        ckpt_path: ./checkpoints/v2-1_512-ema-pruned.ckpt
+        embed_dim: 4
+        #monitor: val/rec_loss
+        ddconfig:
+          double_z: true
+          z_channels: 4
+          resolution: 512
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+    cond_stage_config:
+      target: ldm.modules.encoders.modules.FrozenOpenCLIPEmbedder
+      params:
+        ckpt_path:  ./checkpoints/open_clip_pytorch_model.bin
+        freeze: True
+        layer: "penultimate"
+
+    structcond_stage_config:
+      target: ldm.modules.diffusionmodules.openaimodel.EncoderUNetModelWT
+      params:
+        image_size: 96
+        in_channels: 4
+        model_channels: 256
+        out_channels: 256
+        num_res_blocks: 2
+        attention_resolutions: [ 4, 2, 1 ]
+        dropout: 0
+        channel_mult: [ 1, 1, 2, 2 ]
+        conv_resample: True
+        dims: 2
+        use_checkpoint: False
+        use_fp16: False
+        num_heads: 4
+        num_head_channels: -1
+        num_heads_upsample: -1
+        use_scale_shift_norm: False
+        resblock_updown: False
+        use_new_attention_order: False
+    
+
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 4
+    num_workers: 8
+    wrap: true
+    train:
+      target: ldm.data.wikiart.StyleTransFinetuneV1
+      params:
+        style_root: ./dataset/wikiart
+        content_root: ./dataset/train2014
+        random_augment: true
+        style_size: 512
+        style_crop_size: 256
+        content_size: 512
+        content_crop_size: 256
+    validation:
+      target: ldm.data.wikiart.StyleTransFinetuneV1
+      params:
+        style_root: ./dataset/val/style
+        content_root: ./dataset/val/content
+        random_augment: true
+        style_size: 512
+        style_crop_size: 256
+        content_size: 512
+        content_crop_size: 256
+
+
+lightning:
+  modelcheckpoint:
+    params:
+      every_n_train_steps: 3000
+  modelcheckpoint_epoch:
+    params:
+      every_n_epochs: 3
+  callbacks:
+    image_logger:
+      target: main.ImageLogger
+      params:
+        batch_frequency: 15
+        max_images: 4
+
+
+  trainer:
+    benchmark: True
+    max_epochs: 45
+    accumulate_grad_batches: 4
+    val_check_interval: 600

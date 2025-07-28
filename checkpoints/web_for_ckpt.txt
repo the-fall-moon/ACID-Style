@@ -1,0 +1,8 @@
+v2-1_512-ema-pruned.ckpt
+download from https://huggingface.co/stabilityai/stable-diffusion-2-1-base/tree/main
+
+open_clip_pytorch_model.bin
+download from https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/tree/main
+
+vgg_normalised.pth
+download from https://github.com/naoto0804/pytorch-AdaIN/releases/tag/v0.0.0

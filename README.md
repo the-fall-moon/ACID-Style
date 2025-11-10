@@ -1,3 +1,5 @@
+# ACID-Style: An Adaptive Condition Injection Diffusion Model for Arbitrary Style Transfer
+Code for the AAAI 2026 paper "ACID-Style: An Adaptive Condition Injection Diffusion Model for Arbitrary Style Transfer".
 
 ## Environment
 

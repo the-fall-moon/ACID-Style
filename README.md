@@ -23,7 +23,7 @@ download from https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/tree/
 vgg_normalised.pth
 download from https://github.com/naoto0804/pytorch-AdaIN/releases/tag/v0.0.0
 
-ACID-Style checkpoint ckpt.pth
+**ACID-Style checkpoint** ckpt.pth
 download from https://huggingface.co/Kinghuea/ACID-Style/tree/main
 
 ## Training

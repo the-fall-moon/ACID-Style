@@ -38,5 +38,5 @@ python main.py --train --base configs/v4-train_finetune.yaml --gpus GPU_ID(0,1,2
 
 ## Inference
 ```
-python test_loss_whole_content.py
+python test.py
 ```
